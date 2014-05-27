@@ -25,8 +25,15 @@ ifdef WIFI_DRIVER_FW_PATH_PARAM
 LOCAL_CFLAGS += -DWIFI_DRIVER_FW_PATH_PARAM=\"$(WIFI_DRIVER_FW_PATH_PARAM)\"
 endif
 
+#espressif sdio wifi module
+ifeq ($(SW_BOARD_USR_WIFI), esp8089)
+LOCAL_CFLAGS += -DESPRESSIF_ESP8089_WIFI_USED
+endif
+
 ifeq ($(BOARD_WIFI_VENDOR),realtek)
 LOCAL_SRC_FILES += ../realtek/wlan/libhardware_legacy/wifi/wifi_realtek.c
+else ifeq ($(SW_BOARD_USR_WIFI), esp8089)
+LOCAL_SRC_FILES += ../espressif/wifi/wifi.c
 else
 LOCAL_SRC_FILES += wifi/wifi.c
 endif
