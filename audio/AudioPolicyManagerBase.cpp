@@ -2451,6 +2451,7 @@ audio_devices_t AudioPolicyManagerBase::getDeviceForStrategy(routing_strategy st
         //   - when in call where it doesn't default to STRATEGY_PHONE behavior
         //   - in countries where not enforced in which case it follows STRATEGY_MEDIA
 
+		#if 0 // jimmy@zhongwei just for testing
         if ((strategy == STRATEGY_SONIFICATION) ||
                 (mForceUse[AudioSystem::FOR_SYSTEM] == AudioSystem::FORCE_SYSTEM_ENFORCED)) {
             device = mAvailableOutputDevices & AUDIO_DEVICE_OUT_SPEAKER;
@@ -2458,11 +2459,13 @@ audio_devices_t AudioPolicyManagerBase::getDeviceForStrategy(routing_strategy st
                 ALOGE("getDeviceForStrategy() speaker device not found for STRATEGY_SONIFICATION");
             }
         }
+		#endif
         // The second device used for sonification is the same as the device used by media strategy
         // FALL THROUGH
 
     case STRATEGY_MEDIA: {
         uint32_t device2 = AUDIO_DEVICE_NONE;
+
         if (strategy != STRATEGY_SONIFICATION) {
             // no sonification on remote submix (e.g. WFD)
             device2 = mAvailableOutputDevices & AUDIO_DEVICE_OUT_REMOTE_SUBMIX;
@@ -2493,10 +2496,17 @@ audio_devices_t AudioPolicyManagerBase::getDeviceForStrategy(routing_strategy st
         if (device2 == AUDIO_DEVICE_NONE) {
             device2 = mAvailableOutputDevices & AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET;
         }
+		#if 1 // jimmy@zhongwei just for testing. Notification out to HDMI
+        if (device2 == AUDIO_DEVICE_NONE) {
+            // no sonification on aux digital (e.g. HDMI)
+            device2 = mAvailableOutputDevices & AUDIO_DEVICE_OUT_AUX_DIGITAL;
+        }
+		#else // original : notification out to SPEAKER.
         if ((device2 == AUDIO_DEVICE_NONE) && (strategy != STRATEGY_SONIFICATION)) {
             // no sonification on aux digital (e.g. HDMI)
             device2 = mAvailableOutputDevices & AUDIO_DEVICE_OUT_AUX_DIGITAL;
         }
+		#endif
         if ((device2 == AUDIO_DEVICE_NONE) &&
                 (mForceUse[AudioSystem::FOR_DOCK] == AudioSystem::FORCE_ANALOG_DOCK)) {
             device2 = mAvailableOutputDevices & AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET;
@@ -2505,9 +2515,21 @@ audio_devices_t AudioPolicyManagerBase::getDeviceForStrategy(routing_strategy st
             device2 = mAvailableOutputDevices & AUDIO_DEVICE_OUT_SPEAKER;
         }
 
-        // device is DEVICE_OUT_SPEAKER if we come from case STRATEGY_SONIFICATION or
-        // STRATEGY_ENFORCED_AUDIBLE, AUDIO_DEVICE_NONE otherwise
         device |= device2;
+
+		// jimmy@zhongwei
+		ALOGVV("getDeviceForStrategy()R1 device(0x%x) device1(0x%x) device2(0x%x)", device, device1, device2);
+		if( (device & AUDIO_DEVICE_OUT_WIRED_HEADPHONE) || (device & AUDIO_DEVICE_OUT_WIRED_HEADSET)) // If headset, out to headset
+		{
+			device &= ~AUDIO_DEVICE_OUT_AUX_DIGITAL; //
+		}
+		else if(device & AUDIO_DEVICE_OUT_AUX_DIGITAL) // SPDIF 
+		{
+			device = AUDIO_DEVICE_OUT_AUX_DIGITAL; // All Audio out to SPDIF
+		}
+		ALOGVV("getDeviceForStrategy()R2 device(0x%x)", device);
+
+		
         if (device) break;
         device = mDefaultOutputDevice;
         if (device == AUDIO_DEVICE_NONE) {
@@ -4084,3 +4106,4 @@ void AudioPolicyManagerBase::defaultAudioPolicyConfig(void)
 }
 
 }; // namespace android
+
