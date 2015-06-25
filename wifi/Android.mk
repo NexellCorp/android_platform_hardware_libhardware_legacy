@@ -26,12 +26,12 @@ LOCAL_CFLAGS += -DWIFI_DRIVER_FW_PATH_PARAM=\"$(WIFI_DRIVER_FW_PATH_PARAM)\"
 endif
 
 # psw0523 fix for realtek wifi
-#LOCAL_SRC_FILES += wifi/wifi.c
-ifeq ($(BOARD_WIFI_VENDOR),realtek)
-LOCAL_SRC_FILES += ../realtek/wlan/libhardware_legacy/wifi/wifi_realtek.c
-else
 LOCAL_SRC_FILES += wifi/wifi.c
-endif
+#ifeq ($(BOARD_WIFI_VENDOR),realtek)
+#LOCAL_SRC_FILES += ../realtek/wlan/libhardware_legacy/wifi/wifi_realtek.c
+#else
+#LOCAL_SRC_FILES += wifi/wifi.c
+#endif
 
 ifdef WPA_SUPPLICANT_VERSION
 LOCAL_CFLAGS += -DLIBWPA_CLIENT_EXISTS
