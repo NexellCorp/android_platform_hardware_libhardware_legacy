@@ -39,6 +39,8 @@
 #define _REALLY_INCLUDE_SYS__SYSTEM_PROPERTIES_H_
 #include <sys/_system_properties.h>
 
+#include <sys/syscall.h>
+
 extern int do_dhcp();
 extern int ifc_init();
 extern void ifc_close();
@@ -134,19 +136,18 @@ static char supplicant_prop_name[PROPERTY_KEY_MAX];
 
 static int insmod(const char *filename, const char *args)
 {
-    void *module;
-    unsigned int size;
-    int ret;
-
-    module = load_file(filename, &size);
-    if (!module)
+    int fd = open(filename, O_RDONLY | O_CLOEXEC);
+    if (fd == -1) {
+        ALOGD("insmod: open(\"%s\") failed: %s", filename, strerror(errno));
         return -1;
+    }
 
-    ret = init_module(module, size, args);
+    int rc = syscall(__NR_finit_module, fd, args, 0);
+    if (rc == -1)
+        ALOGD("finit_module for \"%s\" failed: %s", filename, strerror(errno));
 
-    free(module);
-
-    return ret;
+    close(fd);
+    return rc;
 }
 
 static int rmmod(const char *modname)
